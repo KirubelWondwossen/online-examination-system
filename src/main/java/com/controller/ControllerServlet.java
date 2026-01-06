@@ -248,7 +248,15 @@ public class ControllerServlet extends HttpServlet {
     }
 
     private void viewSubmissions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
         int examId = Integer.parseInt(request.getParameter("exam_id"));
+        
+        Exam exam = examDAO.getExamById(examId);
+        if (exam == null || exam.getInstructorId() != user.getUserId()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
+
         List<StudentExam> submissions = studentExamDAO.getSubmissionsByExamId(examId);
         
         // Map student IDs to User objects for display

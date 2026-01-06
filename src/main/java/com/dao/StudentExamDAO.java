@@ -122,7 +122,7 @@ public class StudentExamDAO {
     }
     public List<StudentExam> getSubmissionsByExamId(int examId) {
         List<StudentExam> submissions = new ArrayList<>();
-        String sql = "SELECT * FROM student_exams WHERE exam_id = ? ORDER BY start_time DESC";
+        String sql = "SELECT * FROM student_exams WHERE exam_id = ? AND status IN ('SUBMITTED', 'GRADED') ORDER BY start_time DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
