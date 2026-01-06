@@ -76,11 +76,14 @@ prefix="c" %>
                 <td>${exam.title}</td>
                 <td>${exam.startTime}</td>
                 <td>
-                  <span
-                    class="status-badge ${exam.published ? 'published' : 'draft'}"
-                  >
-                    ${exam.published ? 'Published' : 'Draft'}
-                  </span>
+                  <c:choose>
+                    <c:when test="${exam.published}">
+                      <span class="status-badge published">PUBLISHED</span>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="status-badge draft">CREATED</span>
+                    </c:otherwise>
+                  </c:choose>
                 </td>
                 <td>
                   <a

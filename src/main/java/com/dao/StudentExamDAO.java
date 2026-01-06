@@ -4,6 +4,8 @@ import com.model.StudentExam;
 import com.model.Answer;
 import com.util.DBConnection;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StudentExamDAO {
 
@@ -86,6 +88,23 @@ public class StudentExamDAO {
         return false;
     }
 
+    public java.util.Set<Integer> getTakenExamIds(int studentId) {
+        java.util.Set<Integer> taken = new java.util.HashSet<>();
+        String sql = "SELECT exam_id FROM student_exams WHERE student_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    taken.add(rs.getInt("exam_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return taken;
+    }
+
     public void saveAnswer(Answer answer) {
         String sql = "INSERT INTO student_answers (student_exam_id, question_id, given_answer, points_awarded) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
@@ -100,5 +119,105 @@ public class StudentExamDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    public List<StudentExam> getSubmissionsByExamId(int examId) {
+        List<StudentExam> submissions = new ArrayList<>();
+        String sql = "SELECT * FROM student_exams WHERE exam_id = ? ORDER BY start_time DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, examId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    StudentExam se = new StudentExam();
+                    se.setStudentExamId(rs.getInt("student_exam_id"));
+                    se.setStudentId(rs.getInt("student_id"));
+                    se.setExamId(rs.getInt("exam_id"));
+                    se.setStartTime(rs.getTimestamp("start_time"));
+                    se.setEndTime(rs.getTimestamp("end_time"));
+                    se.setTotalScore(rs.getDouble("total_score"));
+                    se.setStatus(rs.getString("status"));
+                    submissions.add(se);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return submissions;
+    }
+
+    public List<Answer> getAnswersByStudentExamId(int studentExamId) {
+        List<Answer> answers = new ArrayList<>();
+        String sql = "SELECT * FROM student_answers WHERE student_exam_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, studentExamId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Answer ans = new Answer();
+                    ans.setAnswerId(rs.getInt("answer_id"));
+                    ans.setStudentExamId(rs.getInt("student_exam_id"));
+                    ans.setQuestionId(rs.getInt("question_id"));
+                    ans.setGivenAnswer(rs.getString("given_answer"));
+                    ans.setPointsAwarded(rs.getDouble("points_awarded"));
+                    answers.add(ans);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return answers;
+    }
+
+    public void updateAnswerScore(int answerId, double points) {
+        String sql = "UPDATE student_answers SET points_awarded = ? WHERE answer_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setDouble(1, points);
+            pstmt.setInt(2, answerId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateTotalScore(int studentExamId) {
+        String sql = "UPDATE student_exams SET total_score = (SELECT SUM(points_awarded) FROM student_answers WHERE student_exam_id = ?), status = 'GRADED' WHERE student_exam_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, studentExamId);
+            pstmt.setInt(2, studentExamId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public List<StudentExam> getStudentHistory(int studentId) {
+        List<StudentExam> history = new ArrayList<>();
+        String sql = "SELECT * FROM student_exams WHERE student_id = ? ORDER BY start_time DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    StudentExam se = new StudentExam();
+                    se.setStudentExamId(rs.getInt("student_exam_id"));
+                    se.setStudentId(rs.getInt("student_id"));
+                    se.setExamId(rs.getInt("exam_id"));
+                    se.setStartTime(rs.getTimestamp("start_time"));
+                    se.setEndTime(rs.getTimestamp("end_time"));
+                    se.setTotalScore(rs.getDouble("total_score"));
+                    se.setStatus(rs.getString("status"));
+                    history.add(se);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return history;
     }
 }

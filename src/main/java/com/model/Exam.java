@@ -10,6 +10,7 @@ public class Exam {
     private int durationMinutes;
     private int instructorId;
     private boolean isPublished;
+    private boolean isResultPublished;
     private Timestamp createdAt;
 
     public Exam() {}
@@ -45,6 +46,9 @@ public class Exam {
 
     public boolean isPublished() { return isPublished; }
     public void setPublished(boolean published) { isPublished = published; }
+
+    public boolean isResultPublished() { return isResultPublished; }
+    public void setResultPublished(boolean resultPublished) { isResultPublished = resultPublished; }
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

@@ -91,6 +91,19 @@ public class ExamDAO {
         return false;
     }
 
+    public boolean publishResults(int examId) {
+        String sql = "UPDATE exams SET is_result_published = TRUE WHERE exam_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, examId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private Exam mapResultSetToExam(ResultSet rs) throws SQLException {
         Exam exam = new Exam();
         exam.setExamId(rs.getInt("exam_id"));
@@ -100,6 +113,7 @@ public class ExamDAO {
         exam.setDurationMinutes(rs.getInt("duration_minutes"));
         exam.setInstructorId(rs.getInt("instructor_id"));
         exam.setPublished(rs.getBoolean("is_published"));
+        exam.setResultPublished(rs.getBoolean("is_result_published"));
         exam.setCreatedAt(rs.getTimestamp("created_at"));
         return exam;
     }

@@ -7,9 +7,14 @@ import java.sql.SQLException;
 public class DBConnection {
     
     // Database credentials - TO BE CONFIGURED
-    private static final String URL = "jdbc:mysql://localhost:3306/online_exam_system?useSSL=false&serverTimezone=UTC";
-    private static final String USER = "your_username";
-    private static final String PASSWORD = "your_password";
+    private static final String URL =
+    "jdbc:mysql://localhost:3306/online_exam_system" +
+    "?useSSL=false" +
+    "&allowPublicKeyRetrieval=true" +
+    "&serverTimezone=UTC";
+
+    private static final String USER = "root";
+    private static final String PASSWORD = "root";
     
     // Load Driver
     static {

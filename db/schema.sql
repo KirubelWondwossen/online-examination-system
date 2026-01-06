@@ -24,6 +24,7 @@ CREATE TABLE exams (
     duration_minutes INT NOT NULL,
     instructor_id INT NOT NULL,
     is_published BOOLEAN DEFAULT FALSE,
+    is_result_published BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (instructor_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

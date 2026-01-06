@@ -12,18 +12,41 @@
     .question-title { font-weight: bold; margin-bottom: 1rem; }
     .options label { display: block; margin-bottom: 0.5rem; cursor: pointer; }
     button { padding: 1rem 2rem; background-color: #28a745; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px; }
+    .timer-box { background: #fff3cd; padding: 1rem; margin-bottom: 1rem; border: 1px solid #ffeeba; position: sticky; top: 0; z-index: 100; font-size: 1.2rem; font-weight: bold; text-align: center; }
 </style>
+<script>
+    // Server-side End Time passed as milliseconds
+    var endTime = Number("${not empty exam_end_time ? exam_end_time : 0}"); 
+
+    function updateTimer() {
+        var now = new Date().getTime();
+        var distance = endTime - now;
+
+        if (distance < 0) {
+            document.getElementById("timer").innerHTML = "EXPIRED";
+            document.getElementById("examForm").submit();
+            return;
+        }
+
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("timer").innerHTML = hours + "h " + minutes + "m " + seconds + "s ";
+    }
+
+    setInterval(updateTimer, 1000);
+</script>
 </head>
-<body>
+<body onload="updateTimer()">
     <jsp:include page="../common/header.jsp" />
     <main>
         <h2>Exam in Progress</h2>
-        <div style="background: #fff3cd; padding: 1rem; margin-bottom: 1rem; border: 1px solid #ffeeba;">
-            <strong>Time Remaining:</strong> <span id="timer">--:--</span>
-            <!-- Timer logic would go here via JS -->
+        <div class="timer-box">
+            Time Remaining: <span id="timer">Loading...</span>
         </div>
 
-        <form action="controller" method="post">
+        <form id="examForm" action="controller" method="post">
             <input type="hidden" name="action" value="submit_exam">
             
             <c:forEach var="q" items="${sessionScope.current_exam_questions}" varStatus="loop">

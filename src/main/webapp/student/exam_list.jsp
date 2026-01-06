@@ -56,6 +56,21 @@ prefix="c" %>
         <c:if test="${not empty error}">
           <div class="error">${error}</div>
         </c:if>
+        <p
+          style="
+            background-color: #e2e3e5;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 5px solid #6c757d;
+          "
+        >
+          <strong>Note:</strong> Only exams that have been explicitly
+          <strong>published</strong> by instructors are visible here.
+          <br />
+          <strong>Policy:</strong> Students are allowed only
+          <strong>one attempt</strong> per exam. Retakes are strictly
+          prohibited.
+        </p>
         <table>
           <thead>
             <tr>
@@ -72,11 +87,24 @@ prefix="c" %>
                 <td>${exam.title}</td>
                 <td>${exam.durationMinutes} mins</td>
                 <td>
-                  <a
-                    href="controller?action=start_exam&exam_id=${exam.examId}"
-                    class="btn"
-                    >Take Exam</a
-                  >
+                  <c:choose>
+                    <c:when test="${takenExamIds.contains(exam.examId)}">
+                      <button
+                        class="btn"
+                        style="background-color: #6c757d; cursor: not-allowed"
+                        disabled
+                      >
+                        Already Taken
+                      </button>
+                    </c:when>
+                    <c:otherwise>
+                      <a
+                        href="controller?action=start_exam&exam_id=${exam.examId}"
+                        class="btn"
+                        >Take Exam</a
+                      >
+                    </c:otherwise>
+                  </c:choose>
                 </td>
               </tr>
             </c:forEach>

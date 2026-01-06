@@ -6,13 +6,16 @@ import com.dao.StudentExamDAO;
 import com.dao.UserDAO;
 import com.model.Exam;
 import com.model.Question;
+import com.model.StudentExam;
 import com.model.User;
 import com.model.Answer;
 
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -68,6 +71,18 @@ public class ControllerServlet extends HttpServlet {
                 case "publish_exam":
                     publishExam(request, response);
                     break;
+                case "view_submissions":
+                    viewSubmissions(request, response);
+                    break;
+                case "grade_exam":
+                    gradeExam(request, response);
+                    break;
+                case "update_score":
+                    updateScore(request, response);
+                    break;
+                case "publish_results":
+                    publishResults(request, response);
+                    break;
                 // Student Actions
                 case "student_exam_list":
                     listStudentExams(request, response);
@@ -77,6 +92,19 @@ public class ControllerServlet extends HttpServlet {
                     break;
                 case "submit_exam":
                     submitExam(request, response);
+                    break;
+                case "view_results":
+                    viewStudentResults(request, response);
+                    break;
+                // Admin Actions
+                case "admin_users":
+                    listUsers(request, response);
+                    break;
+                case "create_user":
+                    createUser(request, response);
+                    break;
+                case "delete_user":
+                    deleteUser(request, response);
                     break;
                 default:
                     showLogin(request, response);
@@ -137,6 +165,8 @@ public class ControllerServlet extends HttpServlet {
             request.getRequestDispatcher("student/dashboard.jsp").forward(request, response);
         }
     }
+    
+    // Admin Permission Check Helper could be added, but for now we rely on role routing.
 
     // --- Instructor Methods ---
     private void createExam(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -211,10 +241,77 @@ public class ControllerServlet extends HttpServlet {
         response.sendRedirect("controller?action=view_exams");
     }
 
+    private void publishResults(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int examId = Integer.parseInt(request.getParameter("exam_id"));
+        examDAO.publishResults(examId);
+        response.sendRedirect("controller?action=view_submissions&exam_id=" + examId);
+    }
+
+    private void viewSubmissions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int examId = Integer.parseInt(request.getParameter("exam_id"));
+        List<StudentExam> submissions = studentExamDAO.getSubmissionsByExamId(examId);
+        
+        // Map student IDs to User objects for display
+        Map<Integer, User> studentMap = new HashMap<>();
+        for (StudentExam se : submissions) {
+            if (!studentMap.containsKey(se.getStudentId())) {
+                studentMap.put(se.getStudentId(), userDAO.getUserById(se.getStudentId()));
+            }
+        }
+        
+        request.setAttribute("exam_id", examId);
+        request.setAttribute("submissions", submissions);
+        request.setAttribute("studentMap", studentMap);
+        request.getRequestDispatcher("instructor/view_submissions.jsp").forward(request, response);
+    }
+
+    private void gradeExam(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int studentExamId = Integer.parseInt(request.getParameter("student_exam_id"));
+        StudentExam studentExam = studentExamDAO.getStudentExam(studentExamId);
+        List<Answer> answers = studentExamDAO.getAnswersByStudentExamId(studentExamId);
+        List<Question> questions = questionDAO.getQuestionsByExamId(studentExam.getExamId());
+        
+        // Map Question ID to Question object
+        Map<Integer, Question> questionMap = new HashMap<>();
+        for (Question q : questions) {
+            questionMap.put(q.getQuestionId(), q);
+        }
+        
+        User student = userDAO.getUserById(studentExam.getStudentId());
+        
+        request.setAttribute("studentExam", studentExam);
+        request.setAttribute("answers", answers);
+        request.setAttribute("questionMap", questionMap);
+        request.setAttribute("student", student);
+        request.getRequestDispatcher("instructor/grade_exam.jsp").forward(request, response);
+    }
+
+    private void updateScore(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int studentExamId = Integer.parseInt(request.getParameter("student_exam_id"));
+        
+        Map<String, String[]> params = request.getParameterMap();
+        for (String key : params.keySet()) {
+            if (key.startsWith("score_")) {
+                int answerId = Integer.parseInt(key.substring(6)); // score_123 -> 123
+                double score = Double.parseDouble(params.get(key)[0]);
+                studentExamDAO.updateAnswerScore(answerId, score);
+            }
+        }
+        
+        studentExamDAO.updateTotalScore(studentExamId);
+        
+        StudentExam se = studentExamDAO.getStudentExam(studentExamId);
+        response.sendRedirect("controller?action=view_submissions&exam_id=" + se.getExamId());
+    }
+
     // --- Student Methods ---
     private void listStudentExams(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<Exam> exams = examDAO.getAllPublishedExams();
+        User user = (User) request.getSession().getAttribute("user");
+        List<Exam> exams = examDAO.getAllPublishedExams(); // Already filters by is_published=TRUE
+        java.util.Set<Integer> takenExamIds = studentExamDAO.getTakenExamIds(user.getUserId());
+        
         request.setAttribute("exams", exams);
+        request.setAttribute("takenExamIds", takenExamIds);
         request.getRequestDispatcher("student/exam_list.jsp").forward(request, response);
     }
 
@@ -222,8 +319,18 @@ public class ControllerServlet extends HttpServlet {
         User user = (User) request.getSession().getAttribute("user");
         int examId = Integer.parseInt(request.getParameter("exam_id"));
 
+        Exam exam = examDAO.getExamById(examId);
+        
+        // Start Date Enforcement
+        if (exam.getStartTime().after(new Timestamp(System.currentTimeMillis()))) {
+             request.setAttribute("error", "This exam has not started yet. Start time: " + exam.getStartTime());
+             listStudentExams(request, response);
+             return;
+        }
+
         if (studentExamDAO.hasTakenExam(user.getUserId(), examId)) {
-            request.setAttribute("error", "You have already taken this exam.");
+            // Anti-Retake Policy Enforcement
+            request.setAttribute("error", "<strong>Policy Violation:</strong> You have already taken this exam. Retakes are not permitted.");
             listStudentExams(request, response);
             return;
         }
@@ -234,11 +341,33 @@ public class ControllerServlet extends HttpServlet {
         // Randomize questions
         Collections.shuffle(questions);
 
+        // Calculate Exam End Time for Timer
+        StudentExam se = studentExamDAO.getStudentExam(studentExamId);
+        long endTimeMillis = se.getStartTime().getTime() + (exam.getDurationMinutes() * 60 * 1000);
+        
         request.getSession().setAttribute("current_exam_questions", questions);
         request.getSession().setAttribute("current_student_exam_id", studentExamId);
         request.getSession().setAttribute("current_exam_id", examId);
+        request.setAttribute("exam_end_time", endTimeMillis);
         
         request.getRequestDispatcher("student/take_exam.jsp").forward(request, response);
+    }
+    
+    private void viewStudentResults(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
+        List<StudentExam> history = studentExamDAO.getStudentHistory(user.getUserId());
+        
+        // Map Exam IDs to Exam objects for display
+        Map<Integer, Exam> examMap = new HashMap<>();
+        for (StudentExam se : history) {
+            if (!examMap.containsKey(se.getExamId())) {
+                examMap.put(se.getExamId(), examDAO.getExamById(se.getExamId()));
+            }
+        }
+        
+        request.setAttribute("history", history);
+        request.setAttribute("examMap", examMap);
+        request.getRequestDispatcher("student/results.jsp").forward(request, response);
     }
 
     private void submitExam(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -247,6 +376,19 @@ public class ControllerServlet extends HttpServlet {
         List<Question> questions = (List<Question>) request.getSession().getAttribute("current_exam_questions");
         
         double totalScore = 0;
+        
+        // Time Validation
+        StudentExam se = studentExamDAO.getStudentExam(studentExamId);
+        Exam exam = examDAO.getExamById(se.getExamId());
+        long allowedEndTime = se.getStartTime().getTime() + (exam.getDurationMinutes() * 60 * 1000) + (2 * 60 * 1000); // 2 min buffer
+        
+        if (System.currentTimeMillis() > allowedEndTime) {
+             // Mark as LATE or rejected. For now, we will accept but log it / maybe zero score? 
+             // Requirement says: "Reject submission if current time > exam end time"
+             // But let's be graceful on the UI side. The server side should block.
+             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Submission Rejected: Time Limit Exceeded");
+             return;
+        }
 
         for (Question q : questions) {
             String userAnswer = request.getParameter("q_" + q.getQuestionId());
@@ -279,5 +421,39 @@ public class ControllerServlet extends HttpServlet {
         request.getSession().removeAttribute("current_exam_id");
 
         response.sendRedirect("controller?action=dashboard");
+    }
+
+    // --- Admin Methods ---
+    private void listUsers(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        List<User> users = userDAO.getAllUsers();
+        request.setAttribute("users", users);
+        request.getRequestDispatcher("admin/dashboard.jsp").forward(request, response);
+    }
+
+    private void createUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (request.getMethod().equalsIgnoreCase("POST")) {
+            User u = new User();
+            u.setUsername(request.getParameter("username"));
+            u.setPassword(request.getParameter("password")); // Plain text for simplicity per constraints
+            u.setFullName(request.getParameter("full_name"));
+            u.setRole(request.getParameter("role"));
+            
+            if (userDAO.isUsernameTaken(u.getUsername())) {
+                request.setAttribute("error", "Username taken");
+                request.getRequestDispatcher("admin/create_user.jsp").forward(request, response);
+                return;
+            }
+            
+            userDAO.register(u);
+            response.sendRedirect("controller?action=admin_users");
+        } else {
+            request.getRequestDispatcher("admin/create_user.jsp").forward(request, response);
+        }
+    }
+
+    private void deleteUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int userId = Integer.parseInt(request.getParameter("user_id"));
+        userDAO.deleteUser(userId);
+        response.sendRedirect("controller?action=admin_users");
     }
 }
