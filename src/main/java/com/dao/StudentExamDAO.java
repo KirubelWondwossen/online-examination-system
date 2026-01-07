@@ -197,9 +197,15 @@ public class StudentExamDAO {
             e.printStackTrace();
         }
     }
-    public List<StudentExam> getStudentHistory(int studentId) {
-        List<StudentExam> history = new ArrayList<>();
-        String sql = "SELECT * FROM student_exams WHERE student_id = ? ORDER BY start_time DESC";
+    public List<StudentExam> getResultsByStudentId(int studentId) {
+        List<StudentExam> results = new ArrayList<>();
+        // MANDATORY QUERY: JOIN exams, filter by SUBMITTED/GRADED
+        String sql = "SELECT se.*, e.title, e.is_result_published " +
+                     "FROM student_exams se " +
+                     "JOIN exams e ON se.exam_id = e.exam_id " +
+                     "WHERE se.student_id = ? " +
+                     "AND se.status IN ('SUBMITTED', 'GRADED') " +
+                     "ORDER BY se.start_time DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -214,13 +220,18 @@ public class StudentExamDAO {
                     se.setEndTime(rs.getTimestamp("end_time"));
                     se.setTotalScore(rs.getDouble("total_score"));
                     se.setStatus(rs.getString("status"));
-                    history.add(se);
+                    
+                    // Transient fields
+                    se.setExamTitle(rs.getString("title"));
+                    se.setResultPublished(rs.getBoolean("is_result_published"));
+                    
+                    results.add(se);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return history;
+        return results;
     }
     public void saveExamQuestions(int studentExamId, List<Integer> questionIds) {
         String sql = "INSERT INTO student_answers (student_exam_id, question_id, given_answer, points_awarded) VALUES (?, ?, NULL, 0)";

@@ -22,18 +22,22 @@
         var now = new Date().getTime();
         var distance = endTime - now;
 
-        if (distance < 0) {
-            document.getElementById("timer").innerHTML = "EXPIRED";
+        // Convert distance to seconds for "remaining" logic requested
+        var remaining = Math.floor(distance / 1000);
+
+        if (remaining <= 0) {
+            document.getElementById("timer").innerHTML = "0:00 - EXPIRED";
             // STRICT FIX: Auto-submit when time expires
             document.examForm.submit(); 
             return;
         }
 
-        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        // CORRECT TIMER LOGIC (User Request Step 8 Style)
+        var minutes = Math.floor(remaining / 60);
+        var seconds = remaining % 60;
 
-        document.getElementById("timer").innerHTML = hours + "h " + minutes + "m " + seconds + "s ";
+        document.getElementById("timer").innerText =
+            minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     }
 
     // Update timer every second

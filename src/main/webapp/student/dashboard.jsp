@@ -51,8 +51,11 @@ pageEncoding="UTF-8"%>
           <h3>My Results</h3>
           <p>View your exam history and grades.</p>
           <!-- Reuse the exam list or a specific results action -->
-          <a href="#" class="btn" style="background-color: #6c757d"
-            >View History (Coming Soon)</a
+          <a
+            href="controller?action=view_results"
+            class="btn"
+            style="background-color: #6c757d"
+            >View History</a
           >
         </div>
       </main>

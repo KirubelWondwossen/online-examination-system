@@ -75,27 +75,15 @@ prefix="c" %>
             </tr>
           </thead>
           <tbody>
-            <c:forEach var="h" items="${history}">
+            <c:forEach var="r" items="${results}">
               <tr>
-                <td>${examMap[h.examId].title}</td>
-                <td>${h.startTime}</td>
+                <td>${r.examTitle}</td>
+                <td>${r.startTime}</td>
+                <!-- Kept Start Time for Context -->
                 <td>
                   <c:choose>
-                    <c:when test="${h.status == 'GRADED'}"
-                      >${h.totalScore}</c:when
-                    >
-                    <c:otherwise>--</c:otherwise>
-                  </c:choose>
-                </td>
-                <td>
-                  <c:choose>
-                    <c:when test="${examMap[h.examId].resultPublished}">
-                      <c:choose>
-                        <c:when test="${h.status == 'GRADED'}"
-                          >${h.totalScore}</c:when
-                        >
-                        <c:otherwise>--</c:otherwise>
-                      </c:choose>
+                    <c:when test="${r.resultPublished}">
+                      ${r.totalScore}
                     </c:when>
                     <c:otherwise>
                       <span style="color: grey; font-style: italic"
@@ -104,31 +92,11 @@ prefix="c" %>
                     </c:otherwise>
                   </c:choose>
                 </td>
-                <td>
-                  <c:choose>
-                    <c:when test="${not examMap[h.examId].resultPublished}">
-                      <span style="color: #6c757d; font-weight: bold"
-                        >Completed - Awaiting Publication</span
-                      >
-                    </c:when>
-                    <c:when test="${h.status == 'GRADED'}"
-                      ><span class="status-graded">Graded</span></c:when
-                    >
-                    <c:when test="${h.status == 'SUBMITTED'}"
-                      ><span class="status-submitted"
-                        >Pending Grading</span
-                      ></c:when
-                    >
-                    <c:otherwise
-                      ><span class="status-progress"
-                        >In Progress</span
-                      ></c:otherwise
-                    >
-                  </c:choose>
-                </td>
+
+                <td>${r.status}</td>
               </tr>
             </c:forEach>
-            <c:if test="${empty history}">
+            <c:if test="${empty results}">
               <tr>
                 <td colspan="4">No exam history found.</td>
               </tr>

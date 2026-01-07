@@ -10,6 +10,10 @@ public class StudentExam {
     private Timestamp endTime;
     private double totalScore;
     private String status; // IN_PROGRESS, SUBMITTED, GRADED
+    
+    // Transient fields for View
+    private String examTitle;
+    private boolean resultPublished;
 
     public StudentExam() {}
 
@@ -34,4 +38,10 @@ public class StudentExam {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getExamTitle() { return examTitle; }
+    public void setExamTitle(String examTitle) { this.examTitle = examTitle; }
+
+    public boolean isResultPublished() { return resultPublished; }
+    public void setResultPublished(boolean resultPublished) { this.resultPublished = resultPublished; }
 }

@@ -474,18 +474,11 @@ public class ControllerServlet extends HttpServlet {
     
     private void viewStudentResults(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         User user = (User) request.getSession().getAttribute("user");
-        List<StudentExam> history = studentExamDAO.getStudentHistory(user.getUserId());
+        List<StudentExam> results = studentExamDAO.getResultsByStudentId(user.getUserId());
         
-        // Map Exam IDs to Exam objects for display
-        Map<Integer, Exam> examMap = new HashMap<>();
-        for (StudentExam se : history) {
-            if (!examMap.containsKey(se.getExamId())) {
-                examMap.put(se.getExamId(), examDAO.getExamById(se.getExamId()));
-            }
-        }
+
         
-        request.setAttribute("history", history);
-        request.setAttribute("examMap", examMap);
+        request.setAttribute("results", results);
         request.getRequestDispatcher("student/results.jsp").forward(request, response);
     }
 
