@@ -24,7 +24,8 @@
 
         if (distance < 0) {
             document.getElementById("timer").innerHTML = "EXPIRED";
-            document.getElementById("examForm").submit();
+            // STRICT FIX: Auto-submit when time expires
+            document.examForm.submit(); 
             return;
         }
 
@@ -35,6 +36,7 @@
         document.getElementById("timer").innerHTML = hours + "h " + minutes + "m " + seconds + "s ";
     }
 
+    // Update timer every second
     setInterval(updateTimer, 1000);
 </script>
 </head>

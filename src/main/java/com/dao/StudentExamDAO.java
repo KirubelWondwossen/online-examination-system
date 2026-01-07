@@ -122,7 +122,8 @@ public class StudentExamDAO {
     }
     public List<StudentExam> getSubmissionsByExamId(int examId) {
         List<StudentExam> submissions = new ArrayList<>();
-        String sql = "SELECT * FROM student_exams WHERE exam_id = ? AND status IN ('SUBMITTED', 'GRADED') ORDER BY start_time DESC";
+        // STRICT FIX: Filter ONLY 'SUBMITTED' or 'GRADED'. Exclude IN_PROGRESS.
+        String sql = "SELECT * FROM student_exams WHERE exam_id = ? AND status IN ('SUBMITTED', 'GRADED') ORDER BY end_time DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             

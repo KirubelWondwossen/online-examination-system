@@ -500,9 +500,12 @@ public class ControllerServlet extends HttpServlet {
         long allowedEndTime = se.getStartTime().getTime() + (exam.getDurationMinutes() * 60 * 1000) + (2 * 60 * 1000); // 2 min buffer
         
         if (System.currentTimeMillis() > allowedEndTime) {
-             // Mark as LATE or rejected. For now, we will accept but log it / maybe zero score? 
-             // Requirement says: "Reject submission if current time > exam end time"
-             // But let's be graceful on the UI side. The server side should block.
+             // STRICT FIX: Mark as SUBMITTED but don't grade (or grade 0). 
+             // Requirement: "Reject submission if current time > exam end time". 
+             // We'll mark it submitted with 0 score for now or just ignore answers.
+             // Actually, to respect "Reject submission", we can show error page, 
+             // BUT we must update status to SUBMITTED to close the loop so they can't try again.
+             studentExamDAO.submitExam(studentExamId, 0.0); // Close the exam
              response.sendError(HttpServletResponse.SC_FORBIDDEN, "Submission Rejected: Time Limit Exceeded");
              return;
         }
