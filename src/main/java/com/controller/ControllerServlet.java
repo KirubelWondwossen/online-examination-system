@@ -71,6 +71,18 @@ public class ControllerServlet extends HttpServlet {
                 case "publish_exam":
                     publishExam(request, response);
                     break;
+                case "view_questions":
+                    viewQuestions(request, response);
+                    break;
+                case "edit_question":
+                    editQuestion(request, response);
+                    break;
+                case "update_question":
+                    updateQuestion(request, response);
+                    break;
+                case "delete_question":
+                    deleteQuestion(request, response);
+                    break;
                 case "view_submissions":
                     viewSubmissions(request, response);
                     break;
@@ -233,6 +245,93 @@ public class ControllerServlet extends HttpServlet {
             // Optionally fetch existing questions to show
             request.getRequestDispatcher("instructor/add_question.jsp").forward(request, response);
         }
+    }
+
+    private void viewQuestions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
+        int examId = Integer.parseInt(request.getParameter("exam_id"));
+        
+        Exam exam = examDAO.getExamById(examId);
+        if (exam == null || exam.getInstructorId() != user.getUserId()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
+
+        List<Question> questions = questionDAO.getQuestionsByExamId(examId);
+        request.setAttribute("exam", exam);
+        request.setAttribute("questions", questions);
+        request.getRequestDispatcher("instructor/view_questions.jsp").forward(request, response);
+    }
+
+    private void editQuestion(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
+        int questionId = Integer.parseInt(request.getParameter("question_id"));
+        
+        Question question = questionDAO.getQuestionById(questionId);
+        if (question == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Question not found");
+            return;
+        }
+
+        Exam exam = examDAO.getExamById(question.getExamId());
+        if (exam == null || exam.getInstructorId() != user.getUserId()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
+
+        request.setAttribute("question", question);
+        request.getRequestDispatcher("instructor/edit_question.jsp").forward(request, response);
+    }
+
+    private void updateQuestion(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
+        int questionId = Integer.parseInt(request.getParameter("question_id"));
+        int examId = Integer.parseInt(request.getParameter("exam_id")); // Passed for security check & weak verify
+
+        // Verify Ownership
+        Exam exam = examDAO.getExamById(examId);
+        if (exam == null || exam.getInstructorId() != user.getUserId()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
+
+        Question q = questionDAO.getQuestionById(questionId);
+        if (q == null || q.getExamId() != examId) {
+             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid Question/Exam mismatch");
+             return;
+        }
+
+        q.setContent(request.getParameter("content"));
+        q.setQuestionType(request.getParameter("type"));
+        q.setOptionA(request.getParameter("option_a"));
+        q.setOptionB(request.getParameter("option_b"));
+        q.setOptionC(request.getParameter("option_c"));
+        q.setOptionD(request.getParameter("option_d"));
+        q.setCorrectAnswer(request.getParameter("correct_answer"));
+        q.setMarks(Integer.parseInt(request.getParameter("marks")));
+
+        questionDAO.updateQuestion(q);
+        response.sendRedirect("controller?action=view_questions&exam_id=" + examId);
+    }
+
+    private void deleteQuestion(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = (User) request.getSession().getAttribute("user");
+        int questionId = Integer.parseInt(request.getParameter("question_id"));
+        int examId = Integer.parseInt(request.getParameter("exam_id"));
+
+        Exam exam = examDAO.getExamById(examId);
+        if (exam == null || exam.getInstructorId() != user.getUserId()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
+        
+        // Ensure question belongs to this exam (extra safety)
+        Question q = questionDAO.getQuestionById(questionId);
+        if (q != null && q.getExamId() == examId) {
+            questionDAO.deleteQuestion(questionId);
+        }
+
+        response.sendRedirect("controller?action=view_questions&exam_id=" + examId);
     }
     
     private void publishExam(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

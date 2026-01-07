@@ -58,4 +58,67 @@ public class QuestionDAO {
         }
         return questions;
     }
+
+    public Question getQuestionById(int questionId) {
+        String sql = "SELECT * FROM questions WHERE question_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, questionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Question q = new Question();
+                    q.setQuestionId(rs.getInt("question_id"));
+                    q.setExamId(rs.getInt("exam_id"));
+                    q.setContent(rs.getString("content"));
+                    q.setQuestionType(rs.getString("question_type"));
+                    q.setOptionA(rs.getString("option_a"));
+                    q.setOptionB(rs.getString("option_b"));
+                    q.setOptionC(rs.getString("option_c"));
+                    q.setOptionD(rs.getString("option_d"));
+                    q.setCorrectAnswer(rs.getString("correct_answer"));
+                    q.setMarks(rs.getInt("marks"));
+                    return q;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean updateQuestion(Question question) {
+        String sql = "UPDATE questions SET content=?, question_type=?, option_a=?, option_b=?, option_c=?, option_d=?, correct_answer=?, marks=? WHERE question_id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, question.getContent());
+            pstmt.setString(2, question.getQuestionType());
+            pstmt.setString(3, question.getOptionA());
+            pstmt.setString(4, question.getOptionB());
+            pstmt.setString(5, question.getOptionC());
+            pstmt.setString(6, question.getOptionD());
+            pstmt.setString(7, question.getCorrectAnswer());
+            pstmt.setInt(8, question.getMarks());
+            pstmt.setInt(9, question.getQuestionId());
+            
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deleteQuestion(int questionId) {
+        String sql = "DELETE FROM questions WHERE question_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, questionId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

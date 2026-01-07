@@ -87,6 +87,11 @@ prefix="c" %>
                 </td>
                 <td>
                   <a
+                    href="controller?action=view_questions&exam_id=${exam.examId}"
+                    class="action-link"
+                    >View Questions</a
+                  >
+                  <a
                     href="controller?action=add_questions&exam_id=${exam.examId}"
                     class="action-link"
                     >Add Questions</a
