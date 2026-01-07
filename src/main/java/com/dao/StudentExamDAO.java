@@ -220,4 +220,37 @@ public class StudentExamDAO {
         }
         return history;
     }
+    public void saveExamQuestions(int studentExamId, List<Integer> questionIds) {
+        String sql = "INSERT INTO student_answers (student_exam_id, question_id, given_answer, points_awarded) VALUES (?, ?, NULL, 0)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            for (int qId : questionIds) {
+                pstmt.setInt(1, studentExamId);
+                pstmt.setInt(2, qId);
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Integer> getQuestionsForStudentExam(int studentExamId) {
+        List<Integer> questionIds = new ArrayList<>();
+        String sql = "SELECT question_id FROM student_answers WHERE student_exam_id = ? ORDER BY answer_id ASC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, studentExamId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    questionIds.add(rs.getInt("question_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return questionIds;
+    }
 }

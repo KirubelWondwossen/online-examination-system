@@ -11,6 +11,7 @@ public class Exam {
     private int instructorId;
     private boolean isPublished;
     private boolean isResultPublished;
+    private int totalQuestions;
     private Timestamp createdAt;
 
     public Exam() {}
@@ -52,4 +53,7 @@ public class Exam {
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public int getTotalQuestions() { return totalQuestions; }
+    public void setTotalQuestions(int totalQuestions) { this.totalQuestions = totalQuestions; }
 }

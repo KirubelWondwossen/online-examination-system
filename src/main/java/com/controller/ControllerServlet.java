@@ -192,6 +192,8 @@ public class ControllerServlet extends HttpServlet {
             // Basic parsing, simplified for brevity
             Timestamp startTime = Timestamp.valueOf(startTimeStr.replace("T", " ") + ":00");
             int duration = Integer.parseInt(durationStr);
+            String totalQuestionsStr = request.getParameter("total_questions");
+            int totalQuestions = (totalQuestionsStr != null && !totalQuestionsStr.isEmpty()) ? Integer.parseInt(totalQuestionsStr) : 0;
 
             Exam exam = new Exam();
             exam.setTitle(title);
@@ -199,6 +201,7 @@ public class ControllerServlet extends HttpServlet {
             exam.setStartTime(startTime);
             exam.setDurationMinutes(duration);
             exam.setInstructorId(user.getUserId());
+            exam.setTotalQuestions(totalQuestions);
 
             examDAO.createExam(exam);
             response.sendRedirect("controller?action=view_exams");
@@ -443,16 +446,30 @@ public class ControllerServlet extends HttpServlet {
         }
 
         int studentExamId = studentExamDAO.startExam(user.getUserId(), examId);
-        List<Question> questions = questionDAO.getQuestionsByExamId(examId);
         
-        // Randomize questions
-        Collections.shuffle(questions);
+        // Randomization Logic
+        List<Question> allQuestions = questionDAO.getQuestionsByExamId(examId);
+        Collections.shuffle(allQuestions);
+        
+        int limit = exam.getTotalQuestions();
+        if (limit <= 0 || limit > allQuestions.size()) {
+            limit = allQuestions.size();
+        }
+        
+        List<Question> selectedQuestions = allQuestions.subList(0, limit);
+        List<Integer> selectedQuestionIds = new java.util.ArrayList<>();
+        for(Question q : selectedQuestions) {
+            selectedQuestionIds.add(q.getQuestionId());
+        }
+        
+        // Persist Selection
+        studentExamDAO.saveExamQuestions(studentExamId, selectedQuestionIds);
 
         // Calculate Exam End Time for Timer
         StudentExam se = studentExamDAO.getStudentExam(studentExamId);
         long endTimeMillis = se.getStartTime().getTime() + (exam.getDurationMinutes() * 60 * 1000);
         
-        request.getSession().setAttribute("current_exam_questions", questions);
+        request.getSession().setAttribute("current_exam_questions", selectedQuestions);
         request.getSession().setAttribute("current_student_exam_id", studentExamId);
         request.getSession().setAttribute("current_exam_id", examId);
         request.setAttribute("exam_end_time", endTimeMillis);

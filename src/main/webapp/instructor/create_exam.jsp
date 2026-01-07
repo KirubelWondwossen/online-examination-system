@@ -72,6 +72,15 @@ pageEncoding="UTF-8"%>
             <input type="number" name="duration" min="1" value="60" required />
           </div>
 
+          <div class="form-group">
+            <label>Total Questions to Display (0 = All)</label>
+            <input type="number" name="total_questions" min="0" value="0" />
+            <small
+              >If set to 0, all questions added to the exam will be
+              shown.</small
+            >
+          </div>
+
           <button type="submit">Create Exam</button>
         </form>
       </main>
