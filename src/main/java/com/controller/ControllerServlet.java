@@ -192,8 +192,6 @@ public class ControllerServlet extends HttpServlet {
             // Basic parsing, simplified for brevity
             Timestamp startTime = Timestamp.valueOf(startTimeStr.replace("T", " ") + ":00");
             int duration = Integer.parseInt(durationStr);
-            String totalQuestionsStr = request.getParameter("total_questions");
-            int totalQuestions = (totalQuestionsStr != null && !totalQuestionsStr.isEmpty()) ? Integer.parseInt(totalQuestionsStr) : 0;
 
             Exam exam = new Exam();
             exam.setTitle(title);
@@ -201,7 +199,6 @@ public class ControllerServlet extends HttpServlet {
             exam.setStartTime(startTime);
             exam.setDurationMinutes(duration);
             exam.setInstructorId(user.getUserId());
-            exam.setTotalQuestions(totalQuestions);
 
             examDAO.createExam(exam);
             response.sendRedirect("controller?action=view_exams");
@@ -451,12 +448,8 @@ public class ControllerServlet extends HttpServlet {
         List<Question> allQuestions = questionDAO.getQuestionsByExamId(examId);
         Collections.shuffle(allQuestions);
         
-        int limit = exam.getTotalQuestions();
-        if (limit <= 0 || limit > allQuestions.size()) {
-            limit = allQuestions.size();
-        }
-        
-        List<Question> selectedQuestions = allQuestions.subList(0, limit);
+        // Fix: Use all questions as there is no total_questions column
+        List<Question> selectedQuestions = allQuestions; 
         List<Integer> selectedQuestionIds = new java.util.ArrayList<>();
         for(Question q : selectedQuestions) {
             selectedQuestionIds.add(q.getQuestionId());

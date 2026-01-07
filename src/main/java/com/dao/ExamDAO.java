@@ -9,7 +9,7 @@ import java.util.List;
 public class ExamDAO {
 
     public boolean createExam(Exam exam) {
-        String sql = "INSERT INTO exams (title, description, start_time, duration_minutes, instructor_id, total_questions) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO exams (title, description, start_time, duration_minutes, instructor_id) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -18,7 +18,6 @@ public class ExamDAO {
             pstmt.setTimestamp(3, exam.getStartTime());
             pstmt.setInt(4, exam.getDurationMinutes());
             pstmt.setInt(5, exam.getInstructorId());
-            pstmt.setInt(6, exam.getTotalQuestions());
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -115,7 +114,6 @@ public class ExamDAO {
         exam.setInstructorId(rs.getInt("instructor_id"));
         exam.setPublished(rs.getBoolean("is_published"));
         exam.setResultPublished(rs.getBoolean("is_result_published"));
-        exam.setTotalQuestions(rs.getInt("total_questions"));
         exam.setCreatedAt(rs.getTimestamp("created_at"));
         return exam;
     }
