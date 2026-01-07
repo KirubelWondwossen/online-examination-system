@@ -27,6 +27,9 @@
                 <input type="hidden" name="action" value="update_score">
                 <input type="hidden" name="student_exam_id" value="${studentExam.studentExamId}">
                 
+                <input type="hidden" name="student_exam_id" value="${studentExam.studentExamId}">
+
+
                 <c:forEach var="ans" items="${answers}">
                     <c:set var="q" value="${questionMap[ans.questionId]}" />
                     <div class="question-block">

@@ -106,14 +106,15 @@ public class StudentExamDAO {
     }
 
     public void saveAnswer(Answer answer) {
-        String sql = "INSERT INTO student_answers (student_exam_id, question_id, given_answer, points_awarded) VALUES (?, ?, ?, ?)";
+        // STRICT FIX: UPDATE existing placeholder from startExam, do not INSERT duplicates
+        String sql = "UPDATE student_answers SET given_answer = ?, points_awarded = ? WHERE student_exam_id = ? AND question_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setInt(1, answer.getStudentExamId());
-            pstmt.setInt(2, answer.getQuestionId());
-            pstmt.setString(3, answer.getGivenAnswer());
-            pstmt.setDouble(4, answer.getPointsAwarded());
+            pstmt.setString(1, answer.getGivenAnswer());
+            pstmt.setDouble(2, answer.getPointsAwarded());
+            pstmt.setInt(3, answer.getStudentExamId());
+            pstmt.setInt(4, answer.getQuestionId());
             
             pstmt.executeUpdate();
         } catch (SQLException e) {

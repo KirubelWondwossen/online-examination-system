@@ -96,6 +96,12 @@ prefix="c" %>
                     class="action-link"
                     >Add Questions</a
                   >
+                  <a
+                    href="controller?action=view_submissions&exam_id=${exam.examId}"
+                    class="action-link"
+                    style="color: #28a745"
+                    >View Submissions</a
+                  >
                   <c:if test="${not exam.published}">
                     <a
                       href="controller?action=publish_exam&exam_id=${exam.examId}"

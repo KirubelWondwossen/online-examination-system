@@ -369,6 +369,7 @@ public class ControllerServlet extends HttpServlet {
         request.setAttribute("exam_id", examId);
         request.setAttribute("submissions", submissions);
         request.setAttribute("studentMap", studentMap);
+        
         request.getRequestDispatcher("instructor/view_submissions.jsp").forward(request, response);
     }
 
@@ -390,6 +391,7 @@ public class ControllerServlet extends HttpServlet {
         request.setAttribute("answers", answers);
         request.setAttribute("questionMap", questionMap);
         request.setAttribute("student", student);
+        
         request.getRequestDispatcher("instructor/grade_exam.jsp").forward(request, response);
     }
 
